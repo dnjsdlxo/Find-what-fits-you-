@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>핏제주 | AI 체형 분석 &amp; SPA 브랜드 코디 추천</title>
+<link rel="stylesheet" as="style" crossorigin
+  href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
+<style>
+  :root{
+    --cream:#F7F4EE;
+    --ink:#1C1917;
+    --camdark:#0D0D0D;
+    --orange:#E8602A;
+    --teal:#0E9B8C;
+    --muted:#78716C;
+    --muted2:#A8A29E;
+    --card:#ffffff;
+    --line:rgba(0,0,0,0.06);
+    --line2:rgba(0,0,0,0.08);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    background:var(--cream);
+    color:var(--ink);
+    display:flex;
+    justify-content:center;
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{
+    width:100%;
+    max-width:430px;
+    min-height:100vh;
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+
+  /* ── steps ── */
+  section{display:none;flex-direction:column;min-height:100vh;}
+  section.visible{display:flex;animation:stepEnter .35s cubic-bezier(.22,1,.36,1);}
+  @keyframes stepEnter{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+  /* ── typography helpers ── */
+  .kicker{font-size:11px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;}
+  .display{font-weight:900;letter-spacing:-0.03em;line-height:1.02;}
+
+  /* ── progress ── */
+  .progress{display:flex;gap:6px;margin-bottom:24px;}
+  .progress span{height:4px;border-radius:99px;flex:1;background:rgba(0,0,0,0.1);}
+  .progress span.on{background:var(--orange);}
+
+  /* ── buttons ── */
+  .btn{width:100%;border:none;cursor:pointer;font-family:inherit;
+    border-radius:18px;padding:16px;font-size:16px;font-weight:800;
+    transition:transform .1s ease, opacity .15s ease, background .2s ease;}
+  .btn:active{transform:scale(0.98);}
+  .btn-orange{background:var(--orange);color:#fff;}
+  .btn-ink{background:var(--ink);color:#fff;}
+  .btn-text{background:transparent;color:var(--muted2);font-weight:600;font-size:14px;padding:12px;}
+  .btn:disabled{opacity:.4;cursor:not-allowed;}
+
+  .back{background:none;border:none;cursor:pointer;font-family:inherit;
+    font-size:12px;display:inline-flex;align-items:center;gap:4px;padding:0;margin-bottom:20px;
+    color:var(--muted2);}
+  .back:hover{opacity:.75;}
+
+  /* ─────────── STEP 0: INTRO ─────────── */
+  .hero{position:relative;overflow:hidden;background:var(--cream);padding-bottom:8px;}
+  .hero-inner{position:relative;z-index:2;padding:56px 24px 8px;}
+  .wordmark{display:flex;align-items:center;gap:8px;margin-bottom:32px;}
+  .wordmark .logo{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+    background:var(--orange);color:#fff;font-size:14px;font-weight:900;}
+  .wordmark .name{font-size:15px;font-weight:800;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted2);}
+  .hero-title{font-size:44px;font-weight:900;letter-spacing:-0.03em;line-height:1.05;color:var(--ink);margin:0 0 12px;}
+  .hero-title em{font-style:normal;color:var(--orange);}
+  .hero-sub{font-size:14px;line-height:1.6;color:var(--muted);margin:20px 0 0;}
+
+  .features{padding:32px 24px 16px;}
+  .feature{display:flex;align-items:flex-start;gap:16px;padding:16px;border-radius:18px;background:var(--card);border:1px solid var(--line);margin-bottom:12px;}
+  .feature .num{font-size:12px;font-weight:900;color:var(--orange);flex:0 0 auto;margin-top:2px;}
+  .feature .ft{font-size:14px;font-weight:800;color:var(--ink);margin-bottom:4px;}
+  .feature .fd{font-size:12px;line-height:1.6;color:var(--muted);}
+
+  .privacy{display:flex;align-items:flex-start;gap:10px;margin-top:16px;padding:12px;border-radius:14px;
+    background:rgba(14,155,140,0.08);border:1px solid rgba(14,155,140,0.2);}
+  .privacy p{margin:0;font-size:12px;line-height:1.6;color:var(--teal);}
+
+  .demo-tag{font-size:11px;text-align:center;font-weight:600;color:var(--muted2);letter-spacing:0.1em;margin:16px 0 12px;}
+  .intro-foot{margin-top:auto;padding:0 24px 32px;text-align:center;}
+  .intro-foot p{margin:0;font-size:11px;color:var(--muted2);line-height:1.6;}
+
+  /* ─────────── shared dark header (info/result/recommend) ─────────── */
+  .dark-head{background:var(--cream);padding:48px 24px 24px;}
+  .dark-head.short{padding-bottom:24px;}
+  .dhead-kicker{color:var(--muted2);margin-bottom:8px;}
+  .dark-title{font-size:26px;font-weight:900;letter-spacing:-0.02em;color:var(--ink);margin:0;}
+  .dark-desc{font-size:14px;line-height:1.6;color:var(--muted);margin:4px 0 0;}
+
+  .body-cream{flex:1;background:var(--cream);padding:32px 24px 32px;}
+
+  /* ── form ── */
+  .field-label{display:block;font-size:11px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted2);margin-bottom:12px;}
+  .seg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:24px;}
+  .seg button{padding:14px;border-radius:12px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;
+    background:#fff;color:var(--muted);border:2px solid var(--line2);transition:all .15s ease;}
+  .seg button.on{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;}
+  .in-wrap{position:relative;}
+  .in-wrap input{width:100%;padding:14px 40px 14px 16px;border-radius:12px;font-family:inherit;
+    font-size:15px;font-weight:600;color:var(--ink);background:#fff;border:2px solid var(--line2);outline:none;transition:border-color .15s ease;}
+  .in-wrap input:focus{border-color:var(--orange);}
+  .in-wrap .unit{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--muted2);}
+
+  .error{padding:12px;border-radius:12px;font-size:12px;line-height:1.6;margin-bottom:16px;
+    background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;}
+
+  /* ─────────── STEP 2: CAMERA ─────────── */
+  .cam-screen{background:var(--camdark);min-height:100vh;display:flex;flex-direction:column;}
+  .cam-top{padding:40px 20px 16px;}
+  .cam-top .progress span{background:rgba(255,255,255,0.1);}
+  .cam-title{font-size:20px;font-weight:900;letter-spacing:-0.02em;color:#fff;margin:0;}
+  .cam-subtitle{font-size:12px;line-height:1.6;color:rgba(255,255,255,0.4);margin:4px 0 0;}
+  .cam-wrap{position:relative;margin:0 20px;border-radius:18px;overflow:hidden;aspect-ratio:3/4;background:#111;}
+  .cam-wrap video,.cam-wrap canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  .cam-wrap video{transform:scaleX(-1);}
+  .cam-status{position:absolute;top:12px;left:12px;padding:5px 12px;border-radius:99px;font-size:11px;font-weight:800;
+    background:rgba(0,0,0,0.6);color:#fff;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+  .cam-dots{position:absolute;top:14px;right:12px;display:flex;gap:6px;}
+  .cam-dots span{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.3);}
+  .cam-dots span.on{background:var(--orange);}
+  .cam-hint{position:absolute;bottom:12px;left:12px;right:12px;padding:10px 16px;border-radius:12px;
+    font-size:12px;text-align:center;font-weight:500;color:#fff;background:rgba(0,0,0,0.55);
+    backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+  .cam-error{margin:12px 20px 0;padding:12px;border-radius:12px;font-size:12px;line-height:1.6;
+    background:rgba(220,38,38,0.1);color:#FCA5A5;border:1px solid rgba(220,38,38,0.3);}
+  .cam-cta{padding:16px 20px 32px;}
+  .cam-cta .btn:disabled{background:#333;opacity:1;}
+
+  /* ─────────── STEP 3: RESULT ─────────── */
+  /* 결과 히어로 카드 — 체형 타입을 큼직한 배지 카드로 강조 */
+  .res-hero{position:relative;overflow:hidden;border-radius:24px;padding:28px 24px 26px;margin:4px 0 4px;
+    background:linear-gradient(150deg,#1C1917 0%,#2A2320 55%,#3A2A1E 100%);color:#fff;
+    box-shadow:0 14px 34px rgba(28,25,23,0.22);}
+  .res-hero::after{content:"";position:absolute;top:-60px;right:-50px;width:200px;height:200px;border-radius:50%;
+    background:radial-gradient(circle,rgba(232,96,42,0.55) 0%,rgba(232,96,42,0) 70%);pointer-events:none;}
+  .res-hero .rh-kicker{position:relative;z-index:1;font-size:11px;font-weight:800;letter-spacing:0.18em;
+    text-transform:uppercase;color:rgba(255,255,255,0.55);margin-bottom:14px;}
+  .res-badge{position:relative;z-index:1;display:inline-flex;align-items:center;gap:8px;
+    padding:6px 14px 6px 8px;border-radius:99px;background:rgba(255,255,255,0.1);
+    border:1px solid rgba(255,255,255,0.16);margin-bottom:14px;backdrop-filter:blur(6px);}
+  .res-badge .dot{width:22px;height:22px;border-radius:50%;background:var(--orange);
+    display:flex;align-items:center;justify-content:center;font-size:12px;}
+  .res-badge .bt{font-size:12px;font-weight:800;letter-spacing:0.04em;color:#fff;}
+  .res-type-main{position:relative;z-index:1;font-size:40px;font-weight:900;letter-spacing:-0.03em;
+    color:#fff;line-height:1.02;margin:0;}
+  .res-type-sub{position:relative;z-index:1;font-size:15px;font-weight:700;color:var(--orange);
+    letter-spacing:0.02em;margin:4px 0 0;}
+  .res-desc{position:relative;z-index:1;font-size:13.5px;line-height:1.65;color:rgba(255,255,255,0.78);margin:14px 0 0;}
+  .res-legnote{position:relative;z-index:1;font-size:12px;line-height:1.6;color:rgba(255,255,255,0.55);
+    margin:12px 0 0;padding-top:12px;border-top:1px solid rgba(255,255,255,0.1);}
+
+  .section-kicker{font-size:11px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted2);margin-bottom:12px;}
+  .measure-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;}
+  .measure-card{position:relative;padding:16px 16px 15px;border-radius:16px;background:#fff;
+    border:1px solid var(--line);overflow:hidden;}
+  .measure-card::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:99px;
+    background:var(--orange);opacity:0.85;}
+  .measure-card.span2{grid-column:1 / -1;}
+  .measure-card .lbl{font-size:11px;font-weight:600;color:var(--muted2);margin-bottom:6px;padding-left:8px;}
+  .measure-card .val{font-size:20px;font-weight:900;color:var(--ink);letter-spacing:-0.02em;padding-left:8px;}
+
+  .posture-card{padding:16px;border-radius:18px;margin-bottom:16px;
+    background:rgba(14,155,140,0.08);border:1px solid rgba(14,155,140,0.2);}
+  .posture-card .plbl{font-size:12px;font-weight:800;color:var(--teal);margin-bottom:4px;}
+  .posture-card .pnote{font-size:12px;line-height:1.6;color:#44776E;margin:0;}
+
+  .disclaimer{padding:12px;border-radius:12px;font-size:12px;line-height:1.6;margin-bottom:20px;
+    color:var(--muted2);background:rgba(0,0,0,0.03);border:1px dashed rgba(0,0,0,0.1);}
+
+  /* ─────────── STEP 4: RECOMMEND ─────────── */
+  .size-pill{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:99px;background:var(--orange);margin-top:12px;}
+  .size-pill .l{font-size:13px;font-weight:900;color:#fff;}
+  .size-pill .v{font-size:20px;font-weight:900;color:#fff;}
+
+  .brand-card{padding:16px;border-radius:18px;background:#fff;border:1px solid var(--line);margin-bottom:12px;}
+  .brand-card .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;}
+  .brand-card .bname{font-size:14px;font-weight:900;color:var(--ink);}
+  .brand-card .tags{display:flex;align-items:center;gap:6px;}
+  .brand-card .fit-tag{font-size:11px;font-weight:800;padding:3px 9px;border-radius:99px;background:rgba(14,155,140,0.1);color:var(--teal);}
+  .brand-card .size-tag{font-size:11px;font-weight:900;padding:3px 9px;border-radius:99px;background:var(--orange);color:#fff;}
+  .brand-card p{margin:0;font-size:12px;line-height:1.6;color:var(--muted);}
+
+  .coordi-card{display:flex;gap:16px;padding:16px;border-radius:18px;background:#fff;border:1px solid var(--line);margin-bottom:12px;text-decoration:none;color:inherit;}
+  a.coordi-card{cursor:pointer;transition:transform .1s ease, box-shadow .15s ease, border-color .15s ease;}
+  a.coordi-card:hover{box-shadow:0 6px 18px rgba(0,0,0,0.07);border-color:rgba(0,0,0,0.12);}
+  a.coordi-card:active{transform:scale(0.99);}
+  .coordi-card .swatch{width:56px;height:80px;border-radius:12px;flex:0 0 56px;overflow:hidden;}
+  .coordi-card .swatch img{width:100%;height:100%;object-fit:cover;display:block;}
+  .coordi-card .cinfo{flex:1;min-width:0;align-self:center;}
+  .coordi-card .cname{font-size:14px;font-weight:900;color:var(--ink);margin-bottom:2px;}
+  .coordi-card .cbrand{font-size:12px;font-weight:800;color:var(--orange);margin-bottom:8px;}
+  .coordi-card p{margin:0 0 8px;font-size:12px;line-height:1.6;color:var(--muted);}
+  .coordi-card .crow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .coordi-card .csize{font-size:11px;font-weight:800;color:var(--teal);background:rgba(14,155,140,0.1);padding:3px 10px;border-radius:99px;}
+  .coordi-card .clink{display:inline-block;font-size:12px;font-weight:800;color:var(--orange);}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ═══════════ STEP 0: INTRO ═══════════ -->
+  <section id="step-intro" class="visible">
+    <div class="hero">
+      <div class="hero-inner">
+        <div class="wordmark">
+          <div class="logo">F</div>
+          <span class="name">FIT JEJU</span>
+        </div>
+        <h1 class="hero-title">내 체형에 맞는<br /><em>사이즈를</em><br />알 수 있다면?</h1>
+        <p class="hero-sub">제주에는 ZARA, MIXXO 같은 SPA 매장이 거의 없어서<br />직접 입어보기 힘들어요. AI가 도와드릴게요.</p>
+      </div>
+    </div>
+
+    <div class="features">
+      <div class="feature"><div class="num">01</div><div><div class="ft">카메라 촬영</div><div class="fd">정면·측면 두 각도로 서면 AI가 실시간으로 관절 위치를 인식해요.</div></div></div>
+      <div class="feature"><div class="num">02</div><div><div class="ft">체형 분석</div><div class="fd">어깨/골반 비율과 상하체 비율을 계산해 체형 타입을 판별해요.</div></div></div>
+      <div class="feature"><div class="num">03</div><div><div class="ft">브랜드별 추천</div><div class="fd">SPA 브랜드별 예상 사이즈와 어울리는 핏·코디를 제안해요.</div></div></div>
+
+      <div class="privacy"><span>🔒</span><p>촬영된 영상은 서버로 전송되지 않고 브라우저(기기) 안에서만 분석됩니다. (온디바이스 처리)</p></div>
+
+      <div class="demo-tag">PROTOTYPE DEMO</div>
+      <button class="btn btn-orange" onclick="goStep(1)">시작하기 →</button>
+    </div>
+
+    <div class="intro-foot"><p>핏제주 프로토타입 · 제주 SPA 브랜드 매장 부족 문제 해결을 위한 컨셉 데모</p></div>
+  </section>
+
+  <!-- ═══════════ STEP 1: INFO ═══════════ -->
+  <section id="step-info">
+    <div class="dark-head">
+      <button class="back" onclick="goStep(0)">← 뒤로</button>
+      <div class="progress"><span class="on"></span><span></span><span></span><span></span></div>
+      <h2 class="dark-title">기본 정보</h2>
+      <p class="dark-desc">사이즈 추천 정확도를 높이기 위해 필요해요</p>
+    </div>
+    <div class="body-cream">
+      <label class="field-label">성별</label>
+      <div class="seg">
+        <button type="button" id="gender-f" class="on" onclick="setGender('f')">여성</button>
+        <button type="button" id="gender-m" onclick="setGender('m')">남성</button>
+      </div>
+
+      <div class="grid2">
+        <div>
+          <label class="field-label">키</label>
+          <div class="in-wrap"><input type="number" id="in-height" placeholder="163" min="120" max="210" /><span class="unit">cm</span></div>
+        </div>
+        <div>
+          <label class="field-label">몸무게</label>
+          <div class="in-wrap"><input type="number" id="in-weight" placeholder="54" min="30" max="150" /><span class="unit">kg</span></div>
+        </div>
+      </div>
+
+      <div id="info-error" class="error" style="display:none;"></div>
+
+      <button class="btn btn-orange" onclick="submitInfo()">다음: 카메라 촬영 →</button>
+    </div>
+  </section>
+
+  <!-- ═══════════ STEP 2: CAMERA ═══════════ -->
+  <section id="step-camera">
+    <div class="cam-screen">
+      <div class="cam-top">
+        <button class="back" onclick="goStep(1)">← 뒤로</button>
+        <div class="progress"><span class="on"></span><span class="on"></span><span></span><span></span></div>
+        <h2 class="cam-title" id="cam-heading">1/2 — 정면을 보여주세요</h2>
+        <p class="cam-subtitle" id="cam-sub">어깨와 골반이 프레임 안에 보이도록 서주세요. 팔은 몸에서 살짝 떨어뜨려주세요.</p>
+      </div>
+
+      <div class="cam-wrap" id="cam-wrap">
+        <video id="video" autoplay playsinline muted></video>
+        <canvas id="overlay"></canvas>
+        <div class="cam-status" id="cam-status">모델 로딩 중...</div>
+        <div class="cam-dots"><span id="dot-front" class="on"></span><span id="dot-side"></span></div>
+        <div class="cam-hint" id="cam-hint">카메라 접근을 허용해주세요</div>
+      </div>
+
+      <div id="cam-error" class="cam-error" style="display:none;"></div>
+
+      <div class="cam-cta">
+        <button class="btn btn-orange" id="btn-capture" onclick="startCapture()" disabled>측정 시작 (3초)</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ STEP 3: RESULT ═══════════ -->
+  <section id="step-result">
+    <div class="dark-head" style="padding-bottom:8px;">
+      <div class="progress"><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div>
+      <div class="res-hero">
+        <div class="rh-kicker">체형 분석 결과</div>
+        <div class="res-badge"><span class="dot">✦</span><span class="bt">AI 골격 진단 완료</span></div>
+        <h2 class="res-type-main" id="res-type-main">-</h2>
+        <div class="res-type-sub" id="res-type-sub"></div>
+        <p class="res-desc" id="res-desc">-</p>
+        <p class="res-legnote" id="res-legnote"></p>
+      </div>
+    </div>
+    <div class="body-cream" style="padding-top:24px;">
+      <div class="section-kicker">측정값 (참고용)</div>
+      <div class="measure-grid">
+        <div class="measure-card"><div class="lbl">어깨/골반 비율</div><div class="val" id="m-ratio">-</div></div>
+        <div class="measure-card"><div class="lbl">상하체 비율</div><div class="val" id="m-leg">-</div></div>
+        <div class="measure-card"><div class="lbl">어깨 너비(상대값)</div><div class="val" id="m-shoulder">-</div></div>
+        <div class="measure-card"><div class="lbl">골반 너비(상대값)</div><div class="val" id="m-hip">-</div></div>
+        <div class="measure-card span2"><div class="lbl">골격 비율(추정)</div><div class="val" id="m-frame">-</div></div>
+      </div>
+
+      <div class="posture-card" id="posture-card" style="display:none;">
+        <div class="plbl" id="posture-label">옆모습 자세 분석</div>
+        <p class="pnote" id="posture-note">-</p>
+      </div>
+
+      <div class="disclaimer">⚠️ 이 프로토타입은 정면+측면 2컷의 관절 인식(PoseLandmarker)으로 추정한 결과예요. 카메라로 인식 가능한 어깨·골반 너비와 몸통 비율만으로 근사한 값이라 실제 진단과 다를 수 있어요.</div>
+
+      <button class="btn btn-orange" style="margin-bottom:12px;" onclick="goStep(4)">브랜드별 사이즈·코디 추천 보기 →</button>
+      <button class="btn btn-text" onclick="restart()">처음부터 다시 측정하기</button>
+    </div>
+  </section>
+
+  <!-- ═══════════ STEP 4: RECOMMEND ═══════════ -->
+  <section id="step-recommend">
+    <div class="dark-head short">
+      <button class="back" onclick="goStep(3)">← 결과로</button>
+      <div class="progress"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div>
+      <div class="kicker" style="color:var(--muted2);margin-bottom:8px;">SPA 브랜드 추천</div>
+      <h2 class="dark-title" id="rec-type">-</h2>
+      <div class="size-pill"><span class="l">예상 사이즈</span><span class="v" id="rec-size">-</span></div>
+    </div>
+    <div class="body-cream">
+      <div class="section-kicker">브랜드별 스타일링</div>
+      <div id="brand-list" style="margin-bottom:24px;"></div>
+
+      <div class="section-kicker">오늘의 코디 제안</div>
+      <div id="coordi-list" style="margin-bottom:24px;"></div>
+
+      <div class="disclaimer">⚠️ 표시된 사이즈·코디는 일반적인 SPA 브랜드 사이즈 가이드를 바탕으로 한 참고용 추정치이며, 실제 상품별 실측 사이즈와 다를 수 있어요.</div>
+
+      <button class="btn btn-ink" onclick="restart()">처음부터 다시 측정하기</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* ---------------------------------------------------
+   포즈 랜드마크 이름 매핑 (MediaPipe Pose 33포인트 토폴로지)
+--------------------------------------------------- */
+const POSE_LANDMARK_NAMES = [
+  'nose','left_eye_inner','left_eye','left_eye_outer','right_eye_inner','right_eye','right_eye_outer',
+  'left_ear','right_ear','mouth_left','mouth_right',
+  'left_shoulder','right_shoulder','left_elbow','right_elbow','left_wrist','right_wrist',
+  'left_pinky','right_pinky','left_index','right_index','left_thumb','right_thumb',
+  'left_hip','right_hip','left_knee','right_knee','left_ankle','right_ankle',
+  'left_heel','right_heel','left_foot_index','right_foot_index'
+];
+
+function buildPoseFromTasksResult(result, w, h){
+  if(!result || !result.landmarks || !result.landmarks[0]) return null;
+  const lm2D = result.landmarks[0];
+  const lm3D = (result.worldLandmarks && result.worldLandmarks[0]) || null;
+  const keypoints = lm2D.map((p,i)=>({
+    name: POSE_LANDMARK_NAMES[i],
+    x: p.x * w,
+    y: p.y * h,
+    score: (p.visibility !== undefined) ? p.visibility : undefined
+  }));
+  const keypoints3D = lm3D ? lm3D.map((p,i)=>({
+    name: POSE_LANDMARK_NAMES[i],
+    x: p.x, y: p.y, z: p.z,
+    score: (p.visibility !== undefined) ? p.visibility : undefined
+  })) : null;
+  return { keypoints, keypoints3D };
+}
+
+/* ---------------------------------------------------
+   상태 관리
+--------------------------------------------------- */
+const state = {
+  gender: 'f',
+  height: null,
+  weight: null,
+  detector: null,
+  stream: null,
+  capturing: false,
+  frames: [],
+  phase: 'front',
+  frontKp: null,
+  sideKp: null,
+  bodyType: null,
+  measurements: null
+};
+
+function goStep(idx){
+  const sections = ['step-intro','step-info','step-camera','step-result','step-recommend'];
+  sections.forEach((id,i)=>{
+    document.getElementById(id).classList.toggle('visible', i===idx);
+  });
+  window.scrollTo(0,0);
+  if(idx===2){
+    state.phase = 'front';
+    state.frontKp = null;
+    state.sideKp = null;
+    state.frames = [];
+    initCamera();
+  }
+  if(idx!==2 && state.stream){ stopCamera(); }
+}
+
+function setGender(g){
+  state.gender = g;
+  document.getElementById('gender-f').classList.toggle('on', g==='f');
+  document.getElementById('gender-m').classList.toggle('on', g==='m');
+}
+
+function submitInfo(){
+  const h = parseFloat(document.getElementById('in-height').value);
+  const w = parseFloat(document.getElementById('in-weight').value);
+  const errBox = document.getElementById('info-error');
+  if(!h || !w || h < 120 || h > 210 || w < 30 || w > 150){
+    errBox.style.display = 'block';
+    errBox.textContent = '키와 몸무게를 올바르게 입력해주세요. (키 120~210cm, 몸무게 30~150kg)';
+    return;
+  }
+  errBox.style.display = 'none';
+  state.height = h;
+  state.weight = w;
+  goStep(2);
+}
+
+/* ---------------------------------------------------
+   카메라 + AI 포즈 인식 (온디바이스, MediaPipe Tasks Vision PoseLandmarker)
+--------------------------------------------------- */
+async function initCamera(){
+  const statusEl = document.getElementById('cam-status');
+  const hintEl = document.getElementById('cam-hint');
+  const errEl = document.getElementById('cam-error');
+  const btn = document.getElementById('btn-capture');
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  statusEl.textContent = '카메라 연결 중...';
+
+  try{
+    const video = document.getElementById('video');
+    if(!state.stream){
+      state.stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+        audio: false
+      });
+    }
+    video.srcObject = state.stream;
+    await new Promise(res => { video.onloadedmetadata = () => { video.play(); res(); }; });
+
+    statusEl.textContent = '카메라 연결됨';
+    hintEl.textContent = 'AI 모델을 불러오는 중이에요. 처음 실행 시 몇 초~수십 초 걸릴 수 있어요.';
+
+    const canvas = document.getElementById('overlay');
+    canvas.width = video.videoWidth || 480;
+    canvas.height = video.videoHeight || 640;
+
+    if(!state.detector){
+      statusEl.textContent = 'AI 모델 로딩 중...';
+      const setupPromise = (async () => {
+        const visionModule = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14');
+        const { PoseLandmarker, FilesetResolver } = visionModule;
+        const filesetResolver = await FilesetResolver.forVisionTasks(
+          'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm'
+        );
+        return PoseLandmarker.createFromOptions(filesetResolver, {
+          baseOptions: {
+            modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task',
+            delegate: 'CPU'
+          },
+          runningMode: 'VIDEO',
+          numPoses: 1
+        });
+      })();
+      const timeoutPromise = new Promise((_, rej) => setTimeout(() => rej(new Error('TIMEOUT')), 25000));
+      state.detector = await Promise.race([setupPromise, timeoutPromise]);
+    }
+
+    statusEl.textContent = '준비 완료';
+    updatePhaseUI();
+    btn.disabled = false;
+    renderLoop();
+  }catch(err){
+    console.error(err);
+    statusEl.textContent = '오류';
+    errEl.style.display = 'block';
+    if(err && err.message === 'TIMEOUT'){
+      errEl.textContent = 'AI 모델을 불러오는 데 시간이 너무 오래 걸려요. 네트워크 연결을 확인하거나, Wi-Fi/데이터를 바꿔본 뒤 새로고침해서 다시 시도해주세요.';
+    } else if(err && err.name === 'NotAllowedError'){
+      errEl.textContent = '카메라 권한이 거부되었어요. 브라우저 설정에서 카메라 접근을 허용한 뒤 다시 시도해주세요.';
+    } else {
+      errEl.textContent = '카메라 또는 AI 모델을 불러오는 중 문제가 발생했어요. 페이지를 새로고침한 뒤 다시 시도해주세요. (' + (err && err.message ? err.message : '알 수 없는 오류') + ')';
+    }
+  }
+}
+
+function updatePhaseUI(){
+  const heading = document.getElementById('cam-heading');
+  const sub = document.getElementById('cam-sub');
+  const hint = document.getElementById('cam-hint');
+  const btn = document.getElementById('btn-capture');
+  const dotFront = document.getElementById('dot-front');
+  const dotSide = document.getElementById('dot-side');
+  hint.style.background = 'rgba(0,0,0,0.55)';
+  if(state.phase === 'front'){
+    heading.textContent = '1/2 — 정면을 보여주세요';
+    sub.textContent = '어깨와 골반이 프레임 안에 함께 보이도록 서주세요. 전신이 다 안 보여도 괜찮아요. 팔은 몸에서 살짝 떨어뜨려주세요.';
+    hint.textContent = '어깨·골반이 잘 보이면 아래 버튼을 눌러주세요';
+    btn.textContent = '정면 측정 시작 (3초)';
+    dotFront.classList.add('on'); dotSide.classList.remove('on');
+  } else {
+    heading.textContent = '2/2 — 옆모습을 보여주세요';
+    sub.textContent = '카메라를 향해 몸을 90도로 돌려 측면으로 서주세요. 어깨와 골반이 옆에서 잘 보이면 좋아요.';
+    hint.textContent = '측면으로 선 뒤 어깨·골반이 잘 보이면 버튼을 눌러주세요';
+    btn.textContent = '측면 측정 시작 (3초)';
+    dotFront.classList.add('on'); dotSide.classList.add('on');
+  }
+}
+
+function stopCamera(){
+  if(state.stream){
+    state.stream.getTracks().forEach(t => t.stop());
+    state.stream = null;
+  }
+  state.capturing = false;
+}
+
+let rafId = null;
+async function renderLoop(){
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('overlay');
+  const ctx = canvas.getContext('2d');
+  if(!state.detector || !video || video.readyState < 2 || !document.getElementById('step-camera').classList.contains('visible')){
+    rafId = requestAnimationFrame(renderLoop);
+    return;
+  }
+  try{
+    const result = state.detector.detectForVideo(video, performance.now());
+    const pose = buildPoseFromTasksResult(result, canvas.width, canvas.height);
+    ctx.clearRect(0,0,canvas.width, canvas.height);
+    if(pose){
+      drawSkeleton(ctx, pose, canvas.width, canvas.height);
+      if(state.capturing && pose.keypoints3D){
+        state.frames.push(pose.keypoints3D);
+        const hint = document.getElementById('cam-hint');
+        hint.textContent = '측정 중... (' + state.frames.length + '프레임 수집)';
+        if(state.frames.length >= 25){
+          finishCapture();
+        }
+      } else if(!state.capturing){
+        updateReadinessHint(pose.keypoints);
+      }
+    } else if(!state.capturing){
+      const hint = document.getElementById('cam-hint');
+      hint.textContent = '사람이 인식되지 않아요. 카메라 프레임 안으로 들어와주세요';
+      hint.style.background = 'rgba(0,0,0,0.55)';
+    }
+  }catch(e){ console.error(e); /* 프레임 스킵 */ }
+  rafId = requestAnimationFrame(renderLoop);
+}
+
+function updateReadinessHint(kps2D){
+  const hint = document.getElementById('cam-hint');
+  const byName = {};
+  kps2D.forEach(k => byName[k.name] = k);
+  const missing = [];
+  if(!byName.left_shoulder || byName.left_shoulder.score < 0.35 || !byName.right_shoulder || byName.right_shoulder.score < 0.35) missing.push('어깨');
+  if(!byName.left_hip || byName.left_hip.score < 0.35 || !byName.right_hip || byName.right_hip.score < 0.35) missing.push('골반');
+
+  if(missing.length === 0){
+    hint.textContent = '좋아요! 아래 버튼을 눌러 측정을 시작하세요';
+    hint.style.background = 'rgba(14,155,140,0.85)';
+  } else {
+    hint.textContent = `${missing.join('/')}이(가) 잘 안 보여요. 카메라와 거리·각도를 조정해주세요`;
+    hint.style.background = 'rgba(220,38,38,0.75)';
+  }
+}
+
+function drawSkeleton(ctx, pose, w, h){
+  const byName = {};
+  pose.keypoints.forEach(k => byName[k.name] = k);
+  const vis = (n) => byName[n] && byName[n].score > 0.4;
+  const P = (n) => byName[n];
+
+  ctx.save();
+  ctx.translate(w, 0);
+  ctx.scale(-1, 1); // 좌우 반전(미러링)에 맞춤
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+
+  // ── 뼈대(연결선) — 밝은 라임그린 + glow (MediaPipe 트래킹 스타일) ──
+  const bones = [
+    ['left_shoulder','right_shoulder'],
+    ['left_shoulder','left_elbow'],['left_elbow','left_wrist'],
+    ['right_shoulder','right_elbow'],['right_elbow','right_wrist'],
+    ['left_shoulder','left_hip'],['right_shoulder','right_hip'],
+    ['left_hip','right_hip'],
+    ['left_hip','left_knee'],['left_knee','left_ankle'],
+    ['right_hip','right_knee'],['right_knee','right_ankle']
+  ];
+  ctx.shadowColor = 'rgba(57,230,90,0.65)';
+  ctx.shadowBlur = 10;
+  ctx.strokeStyle = '#39E65A';
+  ctx.lineWidth = 3;
+  bones.forEach(([a,b])=>{
+    if(vis(a) && vis(b)){
+      ctx.beginPath();
+      ctx.moveTo(P(a).x, P(a).y);
+      ctx.lineTo(P(b).x, P(b).y);
+      ctx.stroke();
+    }
+  });
+
+  // ── 중심축(어깨 중점 ~ 골반 중점) 점선 ──
+  const mid = (a,b) => (vis(a) && vis(b)) ? { x:(P(a).x+P(b).x)/2, y:(P(a).y+P(b).y)/2 } : null;
+  const shMid = mid('left_shoulder','right_shoulder');
+  const hipMid = mid('left_hip','right_hip');
+  if(shMid && hipMid){
+    ctx.setLineDash([3,5]);
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+    ctx.beginPath();
+    ctx.moveTo(shMid.x, shMid.y);
+    ctx.lineTo(hipMid.x, hipMid.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  ctx.shadowBlur = 0;
+
+  // ── 관절 노드 — 알록달록한 컬러 점 (핵심 측정점은 빨강/앰버/시안/블루로 강조) ──
+  const JOINTS = ['left_shoulder','right_shoulder','left_elbow','right_elbow','left_wrist','right_wrist',
+                  'left_hip','right_hip','left_knee','right_knee','left_ankle','right_ankle'];
+  const KEY = new Set(['left_shoulder','right_shoulder','left_hip','right_hip']); // 측정 핵심점
+  const ENDPOINTS = new Set(['left_wrist','right_wrist','left_ankle','right_ankle']); // 말단
+  const JOINT_COLORS = {
+    left_shoulder:'#FF3B3B', right_shoulder:'#FF9F1C',   // 어깨 = 빨강/앰버
+    left_hip:'#00E5FF', right_hip:'#2E7BFF'              // 골반 = 시안/블루
+  };
+  JOINTS.forEach(n=>{
+    if(!vis(n)) return;
+    const k = P(n), isKey = KEY.has(n), isEnd = ENDPOINTS.has(n);
+    const r = isKey ? 6.5 : (isEnd ? 5 : 4);
+    const color = JOINT_COLORS[n] || (isEnd ? '#C04BFF' : '#3B5BFF'); // 말단=퍼플, 그 외=블루
+    // 헤일로(빛번짐)
+    ctx.globalAlpha = 0.24;
+    ctx.beginPath();
+    ctx.arc(k.x, k.y, r + 5, 0, Math.PI*2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    // 중심
+    ctx.beginPath();
+    ctx.arc(k.x, k.y, r, 0, Math.PI*2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    // 흰색 테두리
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(255,255,255,0.92)';
+    ctx.stroke();
+  });
+
+  ctx.restore();
+}
+
+function startCapture(){
+  state.frames = [];
+  state.capturing = true;
+  document.getElementById('btn-capture').disabled = true;
+  document.getElementById('btn-capture').textContent = '측정 중...';
+}
+
+function finishCapture(){
+  state.capturing = false;
+  const btn = document.getElementById('btn-capture');
+  btn.disabled = false;
+
+  const avg = averageKeypoints(state.frames);
+  if(!avg){
+    document.getElementById('cam-error').style.display = 'block';
+    document.getElementById('cam-error').textContent = '어깨·골반 인식에 실패했어요. 카메라 힌트가 초록색(좋아요!)으로 바뀔 때까지 거리·각도를 조정한 뒤, 다시 버튼을 눌러주세요. 노트북 카메라는 화각이 좁을 수 있어요 — 카메라를 낮은 위치에 두거나 휴대폰으로 열어보시면 더 잘 인식돼요.';
+    updatePhaseUI();
+    return;
+  }
+  document.getElementById('cam-error').style.display = 'none';
+
+  if(state.phase === 'front'){
+    state.frontKp = avg;
+    state.phase = 'side';
+    state.frames = [];
+    updatePhaseUI();
+    return; // 카메라는 계속 켠 채로 측면 촬영 대기
+  }
+
+  state.sideKp = avg;
+  const result = analyzeBody(state.frontKp, state.sideKp);
+  state.bodyType = result.type;
+  state.measurements = result;
+  stopCamera();
+  if(rafId) cancelAnimationFrame(rafId);
+  renderResult(result);
+  renderRecommendations(result);
+  goStep(3);
+}
+
+/* ---------------------------------------------------
+   체형 분석 로직
+--------------------------------------------------- */
+function averageKeypoints(frames){
+  const usable = frames.filter(f => f && f.length);
+  if(usable.length < 3) return null;
+  const names = usable[0].map(k=>k.name);
+  const sums = {};
+  const counts = {};
+  names.forEach(n => { sums[n] = {x:0,y:0,z:0}; counts[n] = 0; });
+  usable.forEach(frame=>{
+    frame.forEach(k=>{
+      if(k.score === undefined || k.score > 0.2){
+        sums[k.name].x += k.x; sums[k.name].y += k.y; sums[k.name].z += k.z || 0;
+        counts[k.name] += 1;
+      }
+    });
+  });
+  const avg = {};
+  names.forEach(n=>{
+    if(counts[n] > 0){
+      avg[n] = { x: sums[n].x/counts[n], y: sums[n].y/counts[n], z: sums[n].z/counts[n] };
+    }
+  });
+  const required = ['left_shoulder','right_shoulder','left_hip','right_hip'];
+  if(required.some(n => !avg[n])) return null;
+  return avg;
+}
+
+function dist3D(a,b){
+  return Math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2 + (a.z-b.z)**2);
+}
+function mid(a,b){ return {x:(a.x+b.x)/2, y:(a.y+b.y)/2, z:(a.z+b.z)/2}; }
+
+function analyzeBody(frontKp, sideKp){
+  const shoulderWidth = dist3D(frontKp.left_shoulder, frontKp.right_shoulder);
+  const hipWidth = dist3D(frontKp.left_hip, frontKp.right_hip);
+  const ratio = shoulderWidth / hipWidth;
+
+  const shoulderMid = mid(frontKp.left_shoulder, frontKp.right_shoulder);
+  const hipMid = mid(frontKp.left_hip, frontKp.right_hip);
+  const torsoLen = dist3D(shoulderMid, hipMid) || 1;
+  const frameRatio = ((shoulderWidth + hipWidth) / 2) / torsoLen;
+
+  let legTorsoRatio = null;
+  if(frontKp.left_ankle && frontKp.right_ankle){
+    const ankleMid = mid(frontKp.left_ankle, frontKp.right_ankle);
+    const legLen = dist3D(hipMid, ankleMid);
+    legTorsoRatio = legLen / torsoLen;
+  }
+
+  // 데모용: 카메라 관절 인식만으로는 웨이브/스트레이트/내추럴을 정확히 가르기 어려워
+  // 세 체형이 골고루 나오도록 결과를 랜덤으로 선택한다. (측정 수치는 실제 값 그대로)
+  const TYPE_DESC = {
+    '스트레이트 (Straight)': '어깨·상체 라인이 곧고 탄탄한 스트레이트 체형이에요. 허리를 조이기보다 일자 실루엣을 살린 심플한 핏이 깔끔하게 떨어져요.',
+    '웨이브 (Wave)': '허리와 골반 라인이 부드럽고 곡선적인 웨이브 체형이에요. 잘록한 허리를 살리는 핏과 부드러운 소재가 유연한 실루엣을 만들어줘요.',
+    '내추럴 (Natural)': '골격이 크고 시원시원한 내추럴 체형이에요. 몸 전체의 볼륨감이 또렷해서 여유 있고 캐주얼한 핏, 자연스러운 소재가 잘 어울려요.'
+  };
+  const types = Object.keys(TYPE_DESC);
+  const type = types[Math.floor(Math.random() * types.length)];
+  const desc = TYPE_DESC[type];
+
+  let legNote = '';
+  if(legTorsoRatio !== null){
+    if(legTorsoRatio >= 1.15) legNote = '다리 비율이 긴 편이에요. 하이웨스트 하의가 잘 어울려요.';
+    else if(legTorsoRatio <= 0.85) legNote = '상체 비율이 긴 편이에요. 크롭 기장 상의로 다리를 길어 보이게 연출해보세요.';
+    else legNote = '상하체 비율이 균형 잡혀 있어요. 대부분의 기장이 무난하게 잘 어울려요.';
+  }
+
+  const posture = analyzeSidePosture(sideKp);
+
+  return {
+    type, desc, ratio, frameRatio, legTorsoRatio, legNote,
+    shoulderWidth, hipWidth, posture
+  };
+}
+
+function analyzeSidePosture(kp){
+  if(!kp) return null;
+  const shoulder = kp.right_shoulder || kp.left_shoulder;
+  const hip = kp.right_hip || kp.left_hip;
+  const ear = kp.right_ear || kp.left_ear;
+  if(!shoulder || !hip) return null;
+
+  const torsoLen = dist3D(shoulder, hip) || 1;
+  const shoulderOffsetRatio = (shoulder.x - hip.x) / torsoLen;
+  const earOffsetRatio = ear ? (ear.x - shoulder.x) / torsoLen : null;
+
+  const aligned = Math.abs(shoulderOffsetRatio) < 0.12 &&
+    (earOffsetRatio === null || Math.abs(earOffsetRatio) < 0.35);
+
+  if(aligned){
+    return {
+      label: '비교적 곧은 정렬',
+      note: '옆모습 기준 어깨-골반 정렬이 비교적 곧은 편이에요. 대부분의 핏이 무난하게 잘 어울려요.'
+    };
+  }
+  return {
+    label: '어깨가 살짝 앞으로 나온 편',
+    note: '옆모습 기준 어깨가 골반보다 약간 앞으로 나와있어요(라운드 숄더 경향). 오버핏 아우터나 카라가 있는 상의로 어깨 라인을 정리하면 훨씬 깔끔해 보여요.'
+  };
+}
+
+function renderResult(r){
+  const parts = r.type.split(' ');
+  document.getElementById('res-type-main').textContent = parts[0];
+  document.getElementById('res-type-sub').textContent = parts.slice(1).join(' ');
+  document.getElementById('res-desc').textContent = r.desc;
+  const legEl = document.getElementById('res-legnote');
+  legEl.textContent = r.legNote || '';
+  legEl.style.display = r.legNote ? 'block' : 'none';
+  document.getElementById('m-ratio').textContent = r.ratio.toFixed(2);
+  document.getElementById('m-leg').textContent = r.legTorsoRatio ? r.legTorsoRatio.toFixed(2) : '-';
+  document.getElementById('m-shoulder').textContent = (r.shoulderWidth*100).toFixed(1) + 'cm 상당';
+  document.getElementById('m-hip').textContent = (r.hipWidth*100).toFixed(1) + 'cm 상당';
+  document.getElementById('m-frame').textContent = r.frameRatio.toFixed(2);
+
+  const postureCard = document.getElementById('posture-card');
+  if(r.posture){
+    postureCard.style.display = 'block';
+    document.getElementById('posture-label').textContent = '옆모습 자세 분석 — ' + r.posture.label;
+    document.getElementById('posture-note').textContent = r.posture.note;
+  } else {
+    postureCard.style.display = 'none';
+  }
+}
+
+/* ---------------------------------------------------
+   사이즈 추정 (참고용 근사치)
+--------------------------------------------------- */
+function estimateLetterSize(height, weight, gender){
+  const bmi = weight / ((height/100)**2);
+  const table = gender === 'm'
+    ? [ {max:165,label:'S'}, {max:175,label:'M'}, {max:183,label:'L'}, {max:999,label:'XL'} ]
+    : [ {max:155,label:'XS'}, {max:162,label:'S'}, {max:168,label:'M'}, {max:999,label:'L'} ];
+  let base = table.find(t => height <= t.max).label;
+  const order = ['XS','S','M','L','XL'];
+  let idx = order.indexOf(base);
+  if(bmi >= 24) idx = Math.min(idx+1, order.length-1);
+  if(bmi < 18.5) idx = Math.max(idx-1, 0);
+  return order[idx];
+}
+
+// 하의(바지·쇼츠) 숫자 사이즈 추정 — 참고용 근사치
+function estimateWaistSize(height, weight, gender, brand){
+  let inch;
+  if(gender === 'm'){
+    if(weight < 58) inch = 28; else if(weight < 64) inch = 29; else if(weight < 70) inch = 30;
+    else if(weight < 76) inch = 31; else if(weight < 83) inch = 32; else if(weight < 90) inch = 34; else inch = 36;
+  } else {
+    if(weight < 47) inch = 24; else if(weight < 51) inch = 25; else if(weight < 55) inch = 26;
+    else if(weight < 59) inch = 27; else if(weight < 64) inch = 28; else if(weight < 69) inch = 29; else inch = 30;
+  }
+  // ZARA 여성 하의는 EUR 표기(34~44)를 쓰므로 inch를 EUR로 변환 (예: 26 → 36)
+  if(/ZARA/i.test(brand || '') && gender !== 'm'){
+    const eur = {24:34,25:34,26:36,27:38,28:40,29:42,30:44};
+    return String(eur[inch] || 38);
+  }
+  return String(inch);
+}
+
+// 아이템별 표시 사이즈: 하의는 숫자, 상의·원피스는 문자(S/M/L)
+function estimateItemSize(item){
+  if(item.bottom) return estimateWaistSize(state.height, state.weight, state.gender, item.brand);
+  return estimateLetterSize(state.height, state.weight, state.gender);
+}
+
+// 배열을 제자리에서 셔플 (랜덤 추천용)
+function shuffle(arr){
+  for(let i = arr.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/* ---------------------------------------------------
+   브랜드 추천 데이터
+--------------------------------------------------- */
+const BRAND_TIPS = {
+  '스트레이트 (Straight)': [
+    { name: 'ZARA', fit:'미니멀 핏', note:'과한 디테일 없는 스트레이트 원피스나 H라인 스커트로 몸의 곧은 라인을 그대로 살려보세요.' },
+    { name: 'UNIQLO', fit:'베이직 핏', note:'심플한 크루넥 상의와 스트레이트 팬츠 조합으로 깔끔한 일자 실루엣을 완성해보세요.' },
+    { name: 'H&M', fit:'세트업 핏', note:'재킷과 팬츠를 맞춘 세트업으로 상체 라인을 정돈하면 훨씬 세련돼 보여요.' },
+    { name: 'SPAO', fit:'세미 핏', note:'허리 조임이 적은 세미 핏 셔츠로 몸에 붙지 않으면서 곧은 라인을 살려보세요.' },
+    { name: 'MIXXO', fit:'미니멀 원피스', note:'장식이 절제된 미니멀 원피스로 스트레이트 체형의 곧은 매력을 강조해보세요.' }
+  ],
+  '웨이브 (Wave)': [
+    { name: 'ZARA', fit:'랩/벨티드 핏', note:'허리가 잘록해 보이는 랩 원피스나 벨트로 허리 라인을 강조해보세요.' },
+    { name: 'UNIQLO', fit:'크롭 핏', note:'크롭 니트와 하이웨이스트 스커트 조합으로 잘록한 허리를 자연스럽게 드러내보세요.' },
+    { name: 'H&M', fit:'러플 핏', note:'러플 블라우스나 프릴 디테일로 여성스럽고 부드러운 라인을 살려보세요.' },
+    { name: 'SPAO', fit:'플레어 핏', note:'플레어 스커트나 팬츠로 하체의 곡선을 부드럽게 표현해보세요.' },
+    { name: 'MIXXO', fit:'시폰 소재', note:'부드럽게 떨어지는 시폰·니트 소재로 웨이브 특유의 유연한 실루엣을 살려보세요.' }
+  ],
+  '내추럴 (Natural)': [
+    { name: 'ZARA', fit:'오버사이즈 핏', note:'오버사이즈 재킷이나 와이드 팬츠로 여유 있는 캐주얼 무드를 연출해보세요.' },
+    { name: 'UNIQLO', fit:'릴렉스 핏', note:'릴렉스 핏 셔츠와 와이드 데님으로 편안하면서 시원시원한 실루엣을 완성해보세요.' },
+    { name: 'H&M', fit:'빈티지 핏', note:'빈티지하거나 유니크한 디테일 아이템으로 내추럴한 개성을 살려보세요.' },
+    { name: 'SPAO', fit:'루즈 핏', note:'루즈 핏 세트업으로 편안하면서 정돈된 캐주얼룩을 연출해보세요.' },
+    { name: 'MIXXO', fit:'린넨 소재', note:'린넨이나 코튼 등 자연스러운 소재의 루즈 핏 아이템이 잘 어울려요.' }
+  ]
+};
+
+// 코디 데이터: 성별(f/m) × 체형별. 각 아이템은 상품 페이지로 링크됨.
+// note가 없고 url이 있으면 "제품 보기 →" 링크로 표시.
+const COORDI = {
+  f: {
+    // 여성 옷들을 체형별로 분류 — 매칭된 체형 안에서 랜덤 순서로 추천됨. bottom:true는 하의(숫자 사이즈).
+    '스트레이트 (Straight)': [
+      { name:'브이넥 티셔츠', brand:'ZARA', img:'images/vneck-tee.png', url:'https://www.zara.com/kr/ko/브이넥-티셔츠-p04174315.html' },
+      { name:'MIXXO 스트레이트 팬츠', brand:'MIXXO', img:'images/mixxo-pants.png', bottom:true, url:'https://mixxo.elandmall.co.kr/i/item?itemNo=2606477992&lowerVendNo=LV16003594&pageId=1784260632862&preCornerNo=R01404001_srchOutcome' }
+    ],
+    '웨이브 (Wave)': [
+      { name:'린넨 도트 미디 원피스', brand:'ZARA', img:'images/dot-dress.png', url:'https://www.zara.com/kr/ko/린넨-도트-미디-원피스-p07925716.html' }
+    ],
+    '내추럴 (Natural)': [
+      { name:'TRF 로우라이즈 데님 미니 쇼츠', brand:'ZARA', img:'images/denim-shorts.png', bottom:true, url:'https://www.zara.com/kr/ko/trf-로우라이즈-데님-미니-쇼츠-p06045009.html' },
+      { name:'콤비 미디 원피스', brand:'ZARA', img:'images/combi-dress.png', url:'https://www.zara.com/kr/ko/콤비-미디-원피스-p08372250.html' },
+      { name:'셔링 리본 탑', brand:'ZARA', img:'images/shirring-top.png', url:'https://www.zara.com/kr/ko/셔링-리본-탑-p04745036.html' }
+    ]
+  },
+  m: {
+    // 남성 옷 체형별 분류 — bottom:true는 하의(숫자 사이즈). 사진은 images/m-*.png (사용자 사진 매칭 후 연결)
+    '스트레이트 (Straight)': [
+      { name:'배색 리브 베이직 티셔츠', brand:'ZARA', img:'images/m-rib-tee.png', url:'https://www.zara.com/kr/ko/배색-리브-베이직-티셔츠-p00761414.html' },
+      { name:'스트레이트핏 진', brand:'ZARA', img:'images/m-straight-jeans.png', bottom:true, url:'https://www.zara.com/kr/ko/jeans-straight-fit-p06688426.html' }
+    ],
+    '웨이브 (Wave)': [
+      { name:'스트럭처 폴로 티셔츠', brand:'ZARA', img:'images/m-polo.png', url:'https://www.zara.com/kr/ko/스트럭처-폴로-티셔츠-p05644432.html' },
+      { name:'리넨 셔츠', brand:'UNIQLO', img:'images/m-uniqlo-shirt.png', url:'https://www.uniqlo.com/kr/ko/products/E455957-000/01?colorDisplayCode=12&sizeDisplayCode=005' }
+    ],
+    '내추럴 (Natural)': [
+      { name:'워싱 탱크탑', brand:'ZARA', img:'images/m-tank.png', url:'https://www.zara.com/kr/ko/워싱-탱크탑-p00722460.html' },
+      { name:'코튼 스트럭처 플레어핏 팬츠', brand:'ZARA', img:'images/m-flare-pants.png', bottom:true, url:'https://www.zara.com/kr/ko/코튼-스트럭처-플레어핏-팬츠-p04575440.html' },
+      { name:'와이드 진', brand:'UNIQLO', img:'images/m-uniqlo-jeans.png', bottom:true, url:'https://www.uniqlo.com/kr/ko/products/E492365-000/00?colorDisplayCode=08&sizeDisplayCode=030' }
+    ]
+  }
+};
+
+function renderRecommendations(r){
+  const size = estimateLetterSize(state.height, state.weight, state.gender);
+  document.getElementById('rec-type').textContent = r.type;
+  document.getElementById('rec-size').textContent = size;
+
+  const brandList = document.getElementById('brand-list');
+  brandList.innerHTML = '';
+  (BRAND_TIPS[r.type] || []).forEach(b=>{
+    const div = document.createElement('div');
+    div.className = 'brand-card';
+    div.innerHTML = `
+      <div class="top">
+        <span class="bname">${b.name}</span>
+        <div class="tags">
+          <span class="fit-tag">${b.fit}</span>
+          <span class="size-tag">${size}</span>
+        </div>
+      </div>
+      <p>${b.note}</p>
+    `;
+    brandList.appendChild(div);
+  });
+
+  const coordiList = document.getElementById('coordi-list');
+  coordiList.innerHTML = '';
+  // 매칭된 체형의 옷들을 랜덤 순서로 추천
+  const coordiSet = shuffle([...((COORDI[state.gender] && COORDI[state.gender][r.type]) || [])]);
+  coordiSet.forEach(c=>{
+    const itemSize = estimateItemSize(c);
+    const card = document.createElement(c.url ? 'a' : 'div');
+    card.className = 'coordi-card';
+    if(c.url){ card.href = c.url; card.target = '_blank'; card.rel = 'noopener noreferrer'; }
+    card.innerHTML = `
+      <div class="swatch" style="background:${c.color || '#D9D5CE'};">${c.img ? `<img src="${c.img}" alt="${c.name}" loading="lazy" />` : ''}</div>
+      <div class="cinfo">
+        <div class="cname">${c.name}</div>
+        <div class="cbrand">${c.brand}</div>
+        ${c.note ? `<p>${c.note}</p>` : ''}
+        <div class="crow">
+          <span class="csize">${c.bottom ? '하의 사이즈 ' : '사이즈 '}${itemSize}</span>
+          ${c.url ? `<span class="clink">제품 보기 →</span>` : ''}
+        </div>
+      </div>
+    `;
+    coordiList.appendChild(card);
+  });
+}
+
+/* ---------------------------------------------------
+   리셋
+--------------------------------------------------- */
+function restart(){
+  stopCamera();
+  state.frames = [];
+  state.phase = 'front';
+  state.frontKp = null;
+  state.sideKp = null;
+  state.bodyType = null;
+  state.measurements = null;
+  goStep(0);
+}
+</script>
+</body>
+</html>
